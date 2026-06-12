@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:gymapp/models/exercise.dart';
+import 'package:gymapp/repositories/database_helper.dart';
 import 'package:gymapp/repositories/exercise_repository.dart';
 
 void main() {
@@ -12,11 +13,12 @@ void main() {
   late ExerciseRepository repo;
 
   setUp(() async {
-    repo = ExerciseRepository(inMemory: true);
+    DatabaseHelper.resetForTesting();
+    repo = ExerciseRepository();
   });
 
   tearDown(() async {
-    await repo.close();
+    await DatabaseHelper.instance.close();
   });
 
   group('ExerciseRepository', () {
@@ -26,7 +28,7 @@ void main() {
     });
 
     test('insert sonrası getAll egzersizi döner', () async {
-      await repo.insert(Exercise(name: 'Curl', weight: 10.0));
+      await repo.insert(Exercise(name: 'Curl', weight: 10.0, categoryId: 1));
       final list = await repo.getAll();
       expect(list.length, 1);
       expect(list.first.name, 'Curl');
@@ -34,14 +36,14 @@ void main() {
     });
 
     test('update kiloyu günceller', () async {
-      final id = await repo.insert(Exercise(name: 'Curl', weight: 10.0));
-      await repo.update(Exercise(id: id, name: 'Curl', weight: 15.0));
+      final id = await repo.insert(Exercise(name: 'Curl', weight: 10.0, categoryId: 1));
+      await repo.update(Exercise(id: id, name: 'Curl', weight: 15.0, categoryId: 1));
       final list = await repo.getAll();
       expect(list.first.weight, 15.0);
     });
 
     test('delete egzersizi kaldırır', () async {
-      final id = await repo.insert(Exercise(name: 'Curl', weight: 10.0));
+      final id = await repo.insert(Exercise(name: 'Curl', weight: 10.0, categoryId: 1));
       await repo.delete(id);
       final list = await repo.getAll();
       expect(list, isEmpty);

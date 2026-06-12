@@ -1,61 +1,52 @@
 import 'package:flutter/foundation.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 
 import '../models/exercise.dart';
+import 'database_helper.dart';
 
 class ExerciseRepository {
-  final bool inMemory;
-  Database? _db;
-
-  ExerciseRepository({this.inMemory = false});
-
-  Future<Database> get database async {
-    _db ??= await _init();
-    return _db!;
-  }
-
-  Future<Database> _init() async {
-    try {
-      final path = inMemory ? inMemoryDatabasePath : join(await getDatabasesPath(), 'gymapp.db');
-      return await openDatabase(
-        path,
-        version: 1,
-        onCreate: (db, _) => db.execute(
-          'CREATE TABLE exercises (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, weight REAL NOT NULL)',
-        ),
-      );
-    } catch (e) {
-      debugPrint('[Repository] DB init error: $e');
-      rethrow;
-    }
-  }
+  final _helper = DatabaseHelper.instance;
 
   Future<List<Exercise>> getAll() async {
     try {
-      final db = await database;
-      final maps = await db.query('exercises', orderBy: 'id DESC');
+      final db = await _helper.database;
+      final maps = await db.query('exercises', orderBy: 'id ASC');
       return maps.map(Exercise.fromMap).toList();
     } catch (e) {
-      debugPrint('[Repository] getAll error: $e');
+      debugPrint('[ExerciseRepository] getAll error: $e');
+      return [];
+    }
+  }
+
+  Future<List<Exercise>> getByCategory(int categoryId) async {
+    try {
+      final db = await _helper.database;
+      final maps = await db.query(
+        'exercises',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+        orderBy: 'id ASC',
+      );
+      return maps.map(Exercise.fromMap).toList();
+    } catch (e) {
+      debugPrint('[ExerciseRepository] getByCategory error: $e');
       return [];
     }
   }
 
   Future<int> insert(Exercise exercise) async {
     try {
-      final db = await database;
+      final db = await _helper.database;
       final map = exercise.toMap()..remove('id');
       return await db.insert('exercises', map);
     } catch (e) {
-      debugPrint('[Repository] insert error: $e');
+      debugPrint('[ExerciseRepository] insert error: $e');
       return -1;
     }
   }
 
   Future<void> update(Exercise exercise) async {
     try {
-      final db = await database;
+      final db = await _helper.database;
       await db.update(
         'exercises',
         exercise.toMap(),
@@ -63,21 +54,30 @@ class ExerciseRepository {
         whereArgs: [exercise.id],
       );
     } catch (e) {
-      debugPrint('[Repository] update error: $e');
+      debugPrint('[ExerciseRepository] update error: $e');
     }
   }
 
   Future<void> delete(int id) async {
     try {
-      final db = await database;
+      final db = await _helper.database;
       await db.delete('exercises', where: 'id = ?', whereArgs: [id]);
     } catch (e) {
-      debugPrint('[Repository] delete error: $e');
+      debugPrint('[ExerciseRepository] delete error: $e');
     }
   }
 
-  Future<void> close() async {
-    await _db?.close();
-    _db = null;
+  Future<void> resetDoneForCategory(int categoryId) async {
+    try {
+      final db = await _helper.database;
+      await db.update(
+        'exercises',
+        {'is_done': 0},
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+    } catch (e) {
+      debugPrint('[ExerciseRepository] resetDoneForCategory error: $e');
+    }
   }
 }

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'providers/category_provider.dart';
 import 'providers/exercise_provider.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ExerciseProvider()..load(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CategoryProvider()..load()),
+        ChangeNotifierProvider(create: (_) => ExerciseProvider()..load()),
+      ],
       child: const GYMApp(),
     ),
   );
