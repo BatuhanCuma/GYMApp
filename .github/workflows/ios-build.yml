@@ -22,6 +22,9 @@ jobs:
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign
 
+      - name: Ad-hoc sign for sideloading
+        run: codesign --force --deep --sign - build/ios/iphoneos/Runner.app
+
       - name: Package IPA
         run: |
           mkdir -p Payload
