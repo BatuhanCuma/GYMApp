@@ -13,7 +13,12 @@ class ExerciseProvider extends ChangeNotifier {
   List<Exercise> get exercises => List.unmodifiable(_exercises);
 
   Future<void> load() async {
-    _exercises = await _repo.getAll();
+    try {
+      _exercises = await _repo.getAll();
+    } catch (e) {
+      debugPrint('[Provider] load error: $e');
+      _exercises = [];
+    }
     notifyListeners();
   }
 

@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'providers/exercise_provider.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     ChangeNotifierProvider(
       create: (_) => ExerciseProvider()..load(),
