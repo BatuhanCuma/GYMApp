@@ -66,14 +66,33 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _ExerciseTile extends StatelessWidget {
+class _ExerciseTile extends StatefulWidget {
   final Exercise exercise;
   const _ExerciseTile({required this.exercise});
 
   @override
+  State<_ExerciseTile> createState() => _ExerciseTileState();
+}
+
+class _ExerciseTileState extends State<_ExerciseTile> {
+  late final TextEditingController _editController;
+
+  @override
+  void initState() {
+    super.initState();
+    _editController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _editController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key('exercise_${exercise.id}'),
+      key: Key('exercise_${widget.exercise.id}'),
       direction: DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -86,7 +105,8 @@ class _ExerciseTile extends StatelessWidget {
         child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
       onDismissed: (_) {
-        context.read<ExerciseProvider>().delete(exercise.id!);
+        if (widget.exercise.id == null) return;
+        context.read<ExerciseProvider>().delete(widget.exercise.id!);
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -97,7 +117,7 @@ class _ExerciseTile extends StatelessWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           title: Text(
-            exercise.name,
+            widget.exercise.name,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -107,7 +127,7 @@ class _ExerciseTile extends StatelessWidget {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              '${exercise.weight} kg',
+              '${widget.exercise.weight} kg',
               style: const TextStyle(
                 color: Color(0xFFBB86FC),
                 fontSize: 14,
@@ -124,17 +144,17 @@ class _ExerciseTile extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    final controller = TextEditingController(text: exercise.weight.toString());
+    _editController.text = widget.exercise.weight.toString();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         title: Text(
-          exercise.name,
+          widget.exercise.name,
           style: const TextStyle(color: Colors.white),
         ),
         content: TextField(
-          controller: controller,
+          controller: _editController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: const TextStyle(color: Colors.white),
           autofocus: true,
@@ -156,9 +176,9 @@ class _ExerciseTile extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              final val = double.tryParse(controller.text.trim());
+              final val = double.tryParse(_editController.text.trim());
               if (val != null && val > 0) {
-                ctx.read<ExerciseProvider>().updateWeight(exercise, val);
+                ctx.read<ExerciseProvider>().updateWeight(widget.exercise, val);
                 Navigator.pop(ctx);
               }
             },
